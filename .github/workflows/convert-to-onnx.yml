@@ -1,0 +1,74 @@
+name: Convert ERNIE 3.0 Mini to ONNX
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:  # 允许手动触发
+
+jobs:
+  convert-onnx:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.8'
+        cache: 'pip'
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install paddlepaddle paddlepaddlenlp
+        pip install onnx==1.12.0 onnxruntime==1.12.0 paddle2onnx
+    
+    - name: Create output directory
+      run: mkdir -p models/onnx
+    
+    - name: Download and convert to ONNX
+      run: |
+        python -c "
+from paddlenlp.transformers import ErnieForSequenceClassification, ErnieTokenizer
+import paddle
+import os
+import paddle2onnx
+
+# 设置输出目录
+output_dir = 'models/onnx'
+os.makedirs(output_dir, exist_ok=True)
+
+# 加载预训练模型和分词器
+tokenizer = ErnieTokenizer.from_pretrained('ernie-3.0-mini-zh')
+model = ErnieForSequenceClassification.from_pretrained('ernie-3.0-mini-zh', num_classes=2)
+model.eval()
+
+# 保存模型
+model.save_pretrained('models/temp')
+tokenizer.save_pretrained('models/temp')
+
+# 定义输入张量
+input_ids = paddle.ones([1, 128], dtype='int64')
+token_type_ids = paddle.ones([1, 128], dtype='int64')
+
+# 转换为ONNX
+paddle2onnx.command.c_paddle_to_onnx(
+    model_dir='models/temp',
+    model_filename='model_state.pdparams',
+    params_filename=None,
+    save_file=os.path.join(output_dir, 'ernie_3.0_mini.onnx'),
+    opset_version=13,
+    input_names=['input_ids', 'token_type_ids'],
+    output_names=['logits']
+)
+        "
+    
+    - name: Upload ONNX model
+      uses: actions/upload-artifact@v3
+      with:
+        name: ernie-3.0-mini-onnx
+        path: models/onnx/
+        retention-days: 30
