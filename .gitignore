@@ -1,0 +1,56 @@
+# Python虚拟环境
+*.venv/
+env/
+venv/
+ernie_env/
+
+# IDE相关
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# 操作系统相关
+.DS_Store
+Thumbs.db
+
+# 编译产物
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.so
+*.dll
+
+# 模型文件
+models/pretrained/
+models/trained/
+models/compressed/
+models/onnx/
+models/temp/
+
+# 数据集文件
+data/
+
+# 日志文件
+*.log
+logs/
+
+# 配置文件
+.env
+*.env
+
+# 临时文件
+*.tmp
+*.temp
+.temp/
+
+# 测试文件
+.pytest_cache/
+.coverage
+
+# 其他
+*.bak
+*.old
+*.backup
